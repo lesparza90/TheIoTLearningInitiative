@@ -7,9 +7,10 @@ myLcd.setCursor(0,0)
 # RGB Blue 
 #myLcd.setColor(53, 39, 249) 
   
-# RGB Red 
-myLcd.setColor(255, 0, 0) 
-myLcd.write('Hello World') 
-myLcd.setCursor(1,2) 
-myLcd.write('Hello World')
-in = raw_input('Press key to continue')
+# RGB Red
+while True: 
+ myLcd.setColor(250, 0, 0) 
+ myLcd.write('Hello Im Luis') 
+ myLcd.setCursor(1,2) 
+ myLcd.write('Hello World')
+
