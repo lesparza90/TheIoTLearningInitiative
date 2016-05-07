@@ -1,3 +1,4 @@
+import dweepy
 import paho.mqtt.client as paho
 import psutil
 import pywapi
@@ -9,6 +10,12 @@ from threading import Thread
 
 import plotly.plotly as py
 from plotly.graph_objs import Scatter, Layout, Figure
+
+
+import pyupm_grove as grove
+
+# Create the relay switch object using GPIO pin 2 (D2)
+relay = grove.GroveRelay(2)
 
 username = 'TheIoTLearningInitiative'
 api_key = 'twr0hlw78c'
@@ -24,10 +31,18 @@ def dataNetwork():
     netdata = psutil.net_io_counters()
     return netdata.packets_sent + netdata.packets_recv
 
+def actuador(key):
+    if key == 'on':
+        relay.on()
+    elif key == 'off':
+        relay.off()
+    time.sleep(1)
+
 def GetMACAddress(ifname):
     import fcntl, socket, struct
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    info = fcntl.ioctl(s.fileno(), 0x8927,  struct.pack('256s', ifname[:15]))
+    info = fcntl.ioctl(s.fileno(), 0x8927,  struct.pack('256s', 
+ifname[:15]))
     return ':'.join(['%02x' % ord(char) for char in info[18:24]])
 
 def dataNetworkHandler():
@@ -44,21 +59,16 @@ def dataNetworkHandler():
 
 def on_message(mosq, obj, msg):
     print "MQTT dataMessageHandler %s %s" % (msg.topic, msg.payload)
+    actuador(str(msg.payload))
 
 def dataMessageHandler():
     mqttclient = paho.Client()
     mqttclient.on_message = on_message
     mqttclient.connect("test.mosquitto.org", 1883, 60)
-    mqttclient.subscribe("IoT101/" + GetMACAddress('wlan0') + "/Message", 0)
+    mqttclient.subscribe("IoT101/" + GetMACAddress('wlan0') + 
+"/Message", 0)
     while mqttclient.loop() == 0:
         pass
-
-def dataWeatherHandler():
-    weather = pywapi.get_weather_from_yahoo('MXJO0043', 'metric')
-    message = "Weather report in " + weather['location']['city']
-    message = message + ", Temperature " + weather['condition']['temp'] + " C"
-    message = message + ", Atmospheric Pressure " + weather['atmosphere']['pressure'] + " mbar"
-    print message
 
 def dataPlotly():
     return dataNetwork()
@@ -109,5 +119,6 @@ if __name__ == '__main__':
 
     while True:
         print "Hello Internet of Things 101"
-        dataWeatherHandler()
         time.sleep(5)
+        json= {"Packet":dataNetwork()}
+        dweepy.dweet_for("lesparza90_test_1", json)
